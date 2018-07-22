@@ -1,4 +1,4 @@
-from typing import Dict, Tuple, Union
+from typing import Dict, Tuple, Union, List
 import copy
 
 
@@ -100,21 +100,50 @@ def get_more_brave_women(core_group: Dict[int, Person], spare: Dict[int, Person]
     return general_group, spare_group
 
 
-# def get_more_brave_specialists(core_group: Dict[int, Person], spare: Dict[int, Person]):
-#     general_group = [person for person in core_group]
-#     spare_group = [person for person in spare]
-#     for person in core_group:
-#         for spare_person in spare:
-#             if person.sex == spare_person.sex \
-#                     and person.profession == spare_person.profession \
-#                     and person.stress_resistance < spare_person.stress_resistance:
-#                 general_group.pop(pid)
-#                 general_group[spare_id] = spare_person
-#                 spare_group.pop(spare_id)
-#                 spare_group[pid] = person
-#                 return get_more_brave_women(general_group, spare_group)
-#
-#     return general_group, spare_group
+def compare(person: Person):
+    return person.stress_resistance
+
+
+def swap_persons(list_a: List[Person],
+                 list_b: List[Person],
+                 person_a: Person,
+                 person_b: Person) -> Tuple[Dict[int, Person], Dict[int, Person]]:
+    core_group = {person.id:person for person in list_a}
+    spare_group = {person.id:person for person in list_b}
+    for person in list_a:
+        if person.id == person_a.id:
+            core_group.pop(person.id)
+            spare_group[person.id] = person
+
+    for person in list_b:
+        if person.id == person_b.id:
+            core_group[person.id] = person
+            spare_group.pop(person.id)
+
+    return {person.id: person for i, person in core_group.items()}, \
+           {person.id: person for i, person in spare_group.items()}
+
+
+
+
+def get_more_brave_specialists(core_group: Dict[int, Person], spare: Dict[int, Person]):
+    general_group = [person for i, person in core_group.items()]
+    spare_group = [person for i, person in spare.items()]
+    for person in sorted(general_group, key=compare, reverse=True):
+        for spare_person in sorted(spare_group, key=compare, reverse=True):
+            if person.profession == spare_person.profession \
+                    and person.stress_resistance < spare_person.stress_resistance:
+
+                general_group, spare_group = swap_persons(general_group,
+                                                          spare_group,
+                                                          person,
+                                                          spare_person)
+                ratio = get_men_women_ratio(general_group)
+                return get_more_brave_specialists(general_group, spare_group)
+                # return get_more_brave_women(general_group, spare_group)
+
+    return {person.id: person for person in general_group},\
+           {person.id: person for person in spare_group}
 
 
 def count_stress_resistance(persons: Dict[int, Person]):
@@ -126,7 +155,7 @@ def count_stress_resistance(persons: Dict[int, Person]):
 
 
 def sum_stress_resist(persons):
-    ids_string = '64;1;2;5;6;7;9;10;11;12;13;78;77;80;17;18;19;20;85;86;57;15;28;29;30;95;96;34;27;36;70;40;45;46;47;76;53;56;84;31;'
+    ids_string = '1;10;12;19;25;27;31;49;59;85;76;80;104;105;84;48;82;117;81;2;98;35;91;54;100;17;26;106;118;109;39;56;8;22;101;41;45;90;20;108;'
     ids = [int(i) for i in ids_string.split(';') if i != '']
 
     stress_resistence_total = 0
@@ -150,6 +179,9 @@ if __name__ == "__main__":
 
     persons = read_persons()
 
+    # print(sum_stress_resist(persons))
+    # exit()
+
 
     brave_persons = get_brave_persons(persons)
 
@@ -161,6 +193,7 @@ if __name__ == "__main__":
     # просто разменяем куна на тянку
     favorites, spare = rebalance_person_groups(favorites, spare)
     favorites, spare = get_more_brave_women(favorites, spare)
+    favorites, spare = get_more_brave_specialists(favorites, spare)
 
     # print('')
     # print(count_stress_resistance(favorites))
