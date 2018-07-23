@@ -134,11 +134,20 @@ def get_more_brave_specialists(core_group: Dict[int, Person], spare: Dict[int, P
             if person.profession == spare_person.profession \
                     and person.stress_resistance < spare_person.stress_resistance:
 
+                """сохраним состав групп перед очередным свопом и, если мужчин будет меньше 30%, 
+                вернём сохранённые группы"""
+                reserve_groups = (copy.deepcopy(general_group),
+                                  copy.deepcopy(spare_group))
+
                 general_group, spare_group = swap_persons(general_group,
                                                           spare_group,
                                                           person,
                                                           spare_person)
                 ratio = get_men_women_ratio(general_group)
+                if ratio[0] < 30:
+                    return {person.id: person for person in reserve_groups[0]}, \
+                           {person.id: person for person in reserve_groups[1]}
+
                 return get_more_brave_specialists(general_group, spare_group)
                 # return get_more_brave_women(general_group, spare_group)
 
